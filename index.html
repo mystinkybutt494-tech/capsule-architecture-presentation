@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111214">
+  <title>Architecture That Evolves | Capsule Housing</title>
+  <style>
+    :root { --ink:#111214; --paper:#f5f4f0; --soft:#d9d8d2; --muted:#989a9a; --line:rgba(245,244,240,.2); }
+    * { box-sizing:border-box; }
+    html { background:var(--ink); scroll-behavior:smooth; }
+    body { margin:0; background:var(--ink); color:var(--paper); font-family:Arial, Helvetica, sans-serif; overflow-x:hidden; }
+    button,input { font:inherit; }
+    button { cursor:pointer; }
+    .shell { min-height:100svh; padding:24px clamp(22px,4vw,64px) 26px; display:grid; grid-template-rows:auto 1fr auto; gap:20px; }
+    .topbar { display:flex; align-items:center; justify-content:space-between; gap:20px; text-transform:uppercase; letter-spacing:.08em; font-size:11px; }
+    .brand { display:flex; align-items:center; gap:10px; font-weight:bold; }
+    .brand-mark { width:14px; height:14px; border:1px solid var(--paper); border-radius:50% 50% 4px 4px; display:inline-block; }
+    .slide-count { color:#aeb0ae; }
+    .stage { display:grid; grid-template-columns:minmax(0,1fr) minmax(270px, 31%); align-items:center; gap:clamp(26px,5vw,88px); max-width:1360px; width:100%; margin:auto; }
+    .copy { align-self:center; }
+    .eyebrow { color:#b9bbb9; text-transform:uppercase; letter-spacing:.15em; font-size:11px; margin-bottom:18px; }
+    h1 { font-size:clamp(42px,6vw,96px); line-height:.9; letter-spacing:-.065em; font-weight:600; text-transform:uppercase; margin:0 0 26px; max-width:850px; }
+    .lead { color:#cacbc7; font-size:clamp(16px,1.55vw,22px); line-height:1.35; max-width:560px; margin:0; }
+    .facts { display:flex; flex-wrap:wrap; gap:24px 46px; margin-top:42px; padding-top:18px; border-top:1px solid var(--line); }
+    .fact { min-width:135px; }
+    .fact span { display:block; color:#9a9c99; font-size:10px; letter-spacing:.11em; text-transform:uppercase; margin-bottom:6px; }
+    .fact strong { font-size:13px; letter-spacing:.02em; text-transform:uppercase; }
+    .visual { position:relative; aspect-ratio:595/842; max-height:68vh; min-height:400px; background:#eaeae6; overflow:hidden; box-shadow:0 26px 70px rgba(0,0,0,.35); cursor:zoom-in; }
+    .visual::after { content:""; position:absolute; inset:0; border:1px solid rgba(0,0,0,.08); pointer-events:none; }
+    .page { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; object-position:center; opacity:0; transform:scale(1.03); transition:opacity .55s ease, transform .8s cubic-bezier(.2,.8,.2,1); }
+    .page.active { opacity:1; transform:scale(1); }
+    .page-label { position:absolute; top:16px; left:16px; z-index:3; background:var(--ink); color:var(--paper); padding:7px 9px; font-size:10px; letter-spacing:.12em; text-transform:uppercase; }
+    .zoom-hint { position:absolute; bottom:16px; right:16px; z-index:3; background:rgba(17,18,20,.88); color:var(--paper); padding:7px 9px; font-size:10px; letter-spacing:.1em; text-transform:uppercase; }
+    .lightbox { position:fixed; inset:0; z-index:20; display:none; place-items:center; padding:26px; background:rgba(0,0,0,.92); }
+    .lightbox.open { display:grid; }
+    .lightbox img { max-width:100%; max-height:calc(100svh - 52px); object-fit:contain; box-shadow:0 30px 90px rgba(0,0,0,.5); }
+    .close-lightbox { position:fixed; top:18px; right:18px; z-index:21; min-width:44px; height:44px; border:1px solid rgba(245,244,240,.5); background:var(--ink); color:var(--paper); font-size:20px; }
+    .controls { display:grid; grid-template-columns:auto 1fr auto; gap:16px; align-items:center; width:100%; max-width:1360px; margin:auto; }
+    .nav { display:flex; gap:8px; }
+    .nav button { width:38px; height:38px; border:1px solid var(--line); background:transparent; color:var(--paper); transition:background .2s,color .2s; }
+    .nav button:hover { background:var(--paper); color:var(--ink); }
+    .progress-wrap { display:grid; gap:7px; }
+    .step-label { display:flex; justify-content:space-between; color:#b3b5b2; font-size:10px; letter-spacing:.08em; text-transform:uppercase; }
+    input[type=range] { width:100%; appearance:none; height:16px; background:transparent; }
+    input[type=range]::-webkit-slider-runnable-track { height:2px; background:linear-gradient(90deg,var(--paper) 0 var(--progress),var(--line) var(--progress) 100%); }
+    input[type=range]::-webkit-slider-thumb { appearance:none; margin-top:-6px; width:14px; height:14px; border:2px solid var(--ink); border-radius:50%; background:var(--paper); }
+    input[type=range]::-moz-range-track { height:2px; background:var(--line); }
+    input[type=range]::-moz-range-progress { height:2px; background:var(--paper); }
+    input[type=range]::-moz-range-thumb { width:10px; height:10px; border:2px solid var(--ink); border-radius:50%; background:var(--paper); }
+    .hint { text-align:right; color:#767976; font-size:10px; letter-spacing:.06em; text-transform:uppercase; white-space:nowrap; }
+    .overview { border-top:1px solid var(--line); padding:34px clamp(22px,4vw,64px) 56px; }
+    .overview-inner { max-width:1360px; margin:auto; }
+    .overview h2 { font-size:12px; font-weight:normal; text-transform:uppercase; letter-spacing:.12em; color:#aeb0ae; margin:0 0 18px; }
+    .chapters { display:grid; grid-template-columns:repeat(9,1fr); gap:8px; }
+    .chapter { padding:10px 0 0; border-top:2px solid #3b3d3d; background:transparent; color:#989a9a; text-align:left; transition:.25s; }
+    .chapter:hover,.chapter.active { color:var(--paper); border-color:var(--paper); }
+    .chapter b { display:block; font-size:10px; letter-spacing:.08em; }
+    .chapter span { display:block; font-size:9px; line-height:1.18; margin-top:5px; text-transform:uppercase; }
+    @media (max-width:800px) { .shell { min-height:auto; padding-top:18px; } .stage { grid-template-columns:1fr; } .copy { order:2; } .visual { order:1; width:min(100%,430px); max-height:none; margin:auto; } h1 { font-size:clamp(42px,13vw,74px); } .hint { display:none; } .chapters { grid-template-columns:repeat(3,1fr); gap:18px 12px; } .chapter span { font-size:10px; } }
+    @media (prefers-reduced-motion:reduce) { *,*::before,*::after { transition:none !important; scroll-behavior:auto !important; } }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="shell" aria-label="Interactive presentation">
+      <header class="topbar"><div class="brand"><i class="brand-mark" aria-hidden="true"></i> Capsule / Modular living</div><div class="slide-count"><span id="current">01</span> / 09</div></header>
+      <div class="stage">
+        <section class="copy" aria-live="polite">
+          <div class="eyebrow" id="eyebrow">Concept presentation</div>
+          <h1 id="title">Architecture<br>that evolves</h1>
+          <p class="lead" id="lead">A flexible approach to compact living, transforming furniture, and configuration.</p>
+          <div class="facts" id="facts"></div>
+        </section>
+        <figure class="visual" id="openImage" role="button" tabindex="0" aria-label="Open current presentation image full screen"><img class="page active" id="page" src="page-1.png" alt="Architecture that evolves cover sheet"><div class="page-label" id="pageLabel">01 / Cover</div><div class="zoom-hint">Click to expand</div></figure>
+      </div>
+      <footer class="controls">
+        <div class="nav"><button type="button" id="previous" aria-label="Previous moment">←</button><button type="button" id="next" aria-label="Next moment">→</button></div>
+        <div class="progress-wrap"><div class="step-label"><span>Scrub the story</span><span id="chapter">Cover</span></div><input id="scrubber" type="range" min="0" max="8" value="0" aria-label="Presentation progress"></div>
+        <div class="hint">Use arrow keys</div>
+      </footer>
+    </section>
+    <section class="overview"><div class="overview-inner"><h2>Presentation index</h2><nav class="chapters" id="chapters" aria-label="Presentation chapters"></nav></div></section>
+  </main>
+  <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Full screen presentation image" aria-hidden="true"><button class="close-lightbox" id="closeLightbox" type="button" aria-label="Close full screen image">×</button><img id="lightboxImage" src="" alt=""></div>
+  <script>
+    const slides = [
+      {name:'Cover', eyebrow:'Concept presentation', title:'Architecture<br>that evolves', lead:'A flexible approach to compact living, transforming furniture, and configuration.', facts:[['Unit capacity','2 residents'],['Project type','Micro living / modular housing'],['Design approach','Prefabrication + adaptability']], alt:'Architecture that evolves cover sheet'},
+      {name:'The system', eyebrow:'01 / A modular system for future living', title:'The capsule<br>as a platform', lead:'A compact living system designed to move, adapt, and be reconfigured as needs change.', facts:[['Off-site','Fabrication'],['Personalisation','Layouts'],['Future-ready','Adaptability']], alt:'Modular system overview'},
+      {name:'Floor plan', eyebrow:'02 / Floor plan', title:'One footprint.<br>Many lives.', lead:'A 5 × 4 metre capsule brings bedroom, kitchen, work, storage, and bathing into one precise plan.', facts:[['Footprint','5 × 4 m'],['Rooms','5 zones'],['Capacity','2 people']], alt:'Capsule floor plan'},
+      {name:'Spatial organization', eyebrow:'03 / Spatial organization', title:'Make every<br>surface work', lead:'The core is organised around a transformable living zone, so each volume has more than one role.', facts:[['Core','Convertible'],['Storage','Integrated'],['Furniture','Transformable']], alt:'Spatial organisation diagrams'},
+      {name:'Interior experience', eyebrow:'04 / Interior experience', title:'A room that<br>changes with you', lead:'Working, cooking, resting, and socialising coexist in a compact interior without losing comfort.', facts:[['01','Work + rest'],['02','Kitchen'],['03','Circulation']], alt:'Interior experience perspective'},
+      {name:'Kitchen + mute box', eyebrow:'05 / Kitchen and mute box', title:'Two spaces.<br>One calm core.', lead:'A folding cabinet reveals the kitchen when needed. The mute box creates a focused, acoustically private room.', facts:[['Kitchen','Fold-out'],['Mute box','Private'],['Storage','Concealed']], alt:'Kitchen and mute box configurations'},
+      {name:'Bathroom', eyebrow:'06 / Bathroom and sanitary', title:'Compact care,<br>complete comfort', lead:'The bathing zone is designed as a fully integrated, space-efficient sanitary system.', facts:[['Bathing','Integrated'],['Layout','Compact'],['Use','Daily comfort']], alt:'Bathroom and sanitary module'},
+      {name:'Transformable furniture', eyebrow:'07 / Transformable furniture', title:'Furniture is<br>an invitation', lead:'A bed, table, sofa, and seating evolve through the day, making the same footprint feel generous.', facts:[['01','Bed + table'],['02','Privacy partition'],['03','Sofa + desk']], alt:'Transformable furniture options'},
+      {name:'The future', eyebrow:'Closing statement', title:'This is<br>the future', lead:'A capsule that can keep pace with the people who call it home.', facts:[['System','Evolves'],['Living','Flexible'],['Future','Modular']], alt:'Future capsule closing visual'}
+    ];
+    const scrubber=document.getElementById('scrubber'), page=document.getElementById('page'), title=document.getElementById('title'), lead=document.getElementById('lead'), eyebrow=document.getElementById('eyebrow'), facts=document.getElementById('facts'), current=document.getElementById('current'), chapter=document.getElementById('chapter'), pageLabel=document.getElementById('pageLabel'), chapters=document.getElementById('chapters'), openImage=document.getElementById('openImage'), lightbox=document.getElementById('lightbox'), lightboxImage=document.getElementById('lightboxImage'), closeLightbox=document.getElementById('closeLightbox');
+    let index=0;
+    slides.forEach((s,i)=>{const b=document.createElement('button'); b.className='chapter'; b.type='button'; b.innerHTML=`<b>${String(i+1).padStart(2,'0')}</b><span>${s.name}</span>`; b.setAttribute('aria-label',`Go to ${s.name}`); b.onclick=()=>show(i); chapters.appendChild(b)});
+    function show(next){ index=Math.max(0,Math.min(slides.length-1,next)); const s=slides[index]; scrubber.value=index; scrubber.style.setProperty('--progress',`${index/8*100}%`); page.classList.remove('active'); setTimeout(()=>{page.src=`page-${index+1}.png`;page.alt=s.alt;page.classList.add('active')},130); eyebrow.textContent=s.eyebrow; title.innerHTML=s.title; lead.textContent=s.lead; facts.innerHTML=s.facts.map(f=>`<div class="fact"><span>${f[0]}</span><strong>${f[1]}</strong></div>`).join(''); current.textContent=String(index+1).padStart(2,'0'); chapter.textContent=s.name; pageLabel.textContent=`${String(index+1).padStart(2,'0')} / ${s.name}`; [...chapters.children].forEach((b,i)=>b.classList.toggle('active',i===index)); }
+    function openViewer(){lightboxImage.src=page.src;lightboxImage.alt=page.alt;lightbox.classList.add('open');lightbox.setAttribute('aria-hidden','false');closeLightbox.focus()}
+    function closeViewer(){lightbox.classList.remove('open');lightbox.setAttribute('aria-hidden','true');openImage.focus()}
+    scrubber.oninput=e=>show(+e.target.value); document.getElementById('previous').onclick=()=>show(index-1); document.getElementById('next').onclick=()=>show(index+1); openImage.onclick=openViewer; openImage.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openViewer()}}; closeLightbox.onclick=closeViewer; lightbox.onclick=e=>{if(e.target===lightbox)closeViewer()}; document.addEventListener('keydown',e=>{if(e.key==='Escape'&&lightbox.classList.contains('open')){closeViewer();return}if(e.key==='ArrowLeft')show(index-1);if(e.key==='ArrowRight'||e.key===' ') {e.preventDefault();show(index+1)}}); show(0);
+  </script>
+</body>
+</html>
